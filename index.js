@@ -28,8 +28,9 @@ app.get('/api/search/:searchQuery', async (req, res) => {
             const response = await axios.get(`https://www.rightstufanime.com/api/items?c=546372&country=US&currency=USD&fieldset=search&include=facets&language=en&limit=12&n=2&offset=0&pricelevel=5&q=${searchQuery}&sort=relevance%3Aasc&use_pcv=F`)
             //const response = await axios.get(`${generateScraperURL(api_key)}&url=https://www.rightstufanime.com/search?show=96&keywords=${searchQuery}`);
             const items = response.data.items
-            const array = []
-            items.map(item => {
+            const itemArray = []
+
+            await items.map(item => {
                 //variables that output data depending on the conditions
                 let tempRating = (item) =>{
                     if(item.custitem_ns_pr_rating == undefined || item.custitem_ns_pr_rating === null || item.custitem_ns_pr_rating === 0){
@@ -47,13 +48,13 @@ app.get('/api/search/:searchQuery', async (req, res) => {
                     }
                 }
                 //pushes JSON objects to empty array
-                array.push({
+                itemArray.push({
                     name: item.storedisplayname,
                     type: item.custitem_rs_web_class,
                     genre: item.custitem_rs_genre,
                     sku: item.upccode,
                     description: item.storedescription,
-                    img_URL: `https://www.rightstufanime.com/images/productImages/${item.upccode}_${item.custitem_rs_web_class}-${item.urlcomponent}-primary.jpg`,
+                    img_URL: item.itemimages_detail,
                     item_url: `https://www.rightstufanime.com/${item.urlcomponent}`,
                     release_date: item.custitem_rs_release_date,
                     rating: tempRating(item),
@@ -70,9 +71,26 @@ app.get('/api/search/:searchQuery', async (req, res) => {
                     stock_msg: item.stockdescription,
                 })
             })
-            console.log(array)
-            //res.json(response.data.items)
-            res.json(array)
+
+            if(itemArray.length === 0){
+                res.json({
+                    'message': `Sorry, we couldnt find any products!`,
+                    'search_term': `${searchQuery}`,
+                    'date': new Date(),
+                    'status': 404
+                })
+            } else {
+                //res.json(itemArray)
+                //res.json(response.data)
+                res.json({
+                    'total': response.data.total,
+                    'items': itemArray,
+                    'paging': response.data.links
+                })
+            }
+            //console.log(array)
+            //res.json(response.data)
+            //res.json(array)
         }
 
     } catch(error){
