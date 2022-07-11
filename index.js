@@ -1,5 +1,7 @@
 const express = require('express');
 const axios = require('axios');
+const _ = require('lodash');
+const flatten = require('flat')
 
 const app = express();
 const PORT = process.env.PORT || 8080
@@ -19,7 +21,7 @@ app.get('/api/search/:searchQuery', async (req, res) => {
 
     try{
         //const response = await request(`${baseURL}&url=https://www.amazon.com/dp/${productId}`);
-        if(api_key === undefined){
+        if(!api_key === undefined){
             res.json({
                 message: "ERROR: Please enter api key in URL",
                 status: 404
@@ -47,6 +49,18 @@ app.get('/api/search/:searchQuery', async (req, res) => {
                         return item.custitem_rs_new_releases_preorders
                     }
                 }
+                getValue = (o, p) => p.split('.').reduce((r, k) => r[k], o);
+                let flatten_imageDetails = flatten(item.itemimages_detail)
+                // console.log(Object.keys(flatten_imageDetails)[0])
+                let obj = item.itemimages_detail
+                let imageFields = Object.keys(flatten_imageDetails);
+                let itemPath = imageFields[0]
+                // console.log(itemPath)
+                console.log(getValue(obj, itemPath));
+                // const found = Object.keys(flatten_imageDetails).find(key=>flatten_imageDetails[key]===url);
+                // const team = found.split(".",1)
+                // console.log(team)
+                // console.log(obj[path])
                 //pushes JSON objects to empty array
                 itemArray.push({
                     name: item.storedisplayname,
